@@ -12,10 +12,6 @@ ALLOWED_ORIGINS = [
 
 def validate_request(request):
     """Validate the incoming request"""
-    # Check origin
-    origin = request.headers.get('Origin', '')
-    if origin and origin not in ALLOWED_ORIGINS:
-        return False, f"Origin not allowed: {origin}"
     
     # Check if it's POST and has JSON data for main functionality
     if request.method == 'POST' and request.content_type != 'application/json':

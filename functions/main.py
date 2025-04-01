@@ -1,5 +1,5 @@
 from firebase_functions import https_fn
-from flask import jsonify, request
+from flask import jsonify, request, Flask
 import traceback
 import base64
 import tempfile
@@ -10,7 +10,7 @@ import os
 from utilsfunctions import validate_request, get_cors_headers
 from ai_services import translate_text, transcribe_audio
 
-@https_fn.on_request()
+@https_fn.on_request(memory=1024, cpu=1, timeout_sec=540)
 def translationService(request):
     """Process translation requests with actual audio data"""
 
@@ -64,7 +64,6 @@ def translationService(request):
                         if not success:
                             return jsonify({'error': f"Translation error: {translated_text}"}), 500, headers
                         
-                        
                         # Return successful response
                         return jsonify({
                             'originalText': transcription,
@@ -93,3 +92,50 @@ def translationService(request):
         print(f"Error: {error_message}")
         print(stack_trace)
         return jsonify({'error': error_message}), 500, headers
+
+@https_fn.on_request(memory=256)
+def testCORS(request):
+    """Simple function to test CORS configuration."""
+    
+    # Get appropriate CORS headers
+    headers = get_cors_headers(request)
+    
+    # Handle preflight OPTIONS request
+    if request.method == 'OPTIONS':
+        return ('', 204, headers)
+    
+    try:
+        return jsonify({
+            'status': 'success',
+            'message': 'CORS test function is working!',
+            'requestMethod': request.method,
+            'originReceived': request.headers.get('Origin', 'No origin in request')
+        }), 200, headers
+            
+    except Exception as e:
+        error_message = str(e)
+        stack_trace = traceback.format_exc()
+        print(f"Error: {error_message}")
+        print(stack_trace)
+        return jsonify({'error': error_message}), 500, headers
+
+if __name__ == "__main__":
+    # This block is only executed when the script is run directly
+    # It's not used when deployed as a Firebase Function
+    # But it helps with local testing
+
+    app = Flask(__name__)
+    
+    # Forward requests to the Firebase Functions
+    @app.route('/<path:path>', methods=['GET', 'POST', 'OPTIONS'])
+    def forward(path):
+        if path == 'translationService':
+            return translationService(request)
+        elif path == 'testCORS':
+            return testCORS(request)
+        else:
+            return jsonify({'error': 'Unknown function'}), 404
+
+    # Get port from environment variable or use 8080
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port)

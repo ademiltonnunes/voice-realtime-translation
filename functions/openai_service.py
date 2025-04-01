@@ -4,12 +4,16 @@ from dotenv import load_dotenv
 import traceback
 import os
 import httpx
+import time
 
 # OpenAI model configuration
 OPENAI_MODELS = {
     'chat': 'gpt-3.5-turbo',
     'whisper': 'base', # Whisper model size: "base", "small", "medium", or "large"
 }
+
+# Lazy-loaded whisper model
+_whisper_model = None
 
 def get_openai_api_key():
     """Retrieve OpenAI API key from Firebase config or environment variables."""
@@ -22,7 +26,6 @@ def get_openai_api_key():
     except (ImportError, Exception):
         # Fallback to environment variables for local development
         try:
-            
             load_dotenv()
         except ImportError:
             pass  # dotenv might not be installed
@@ -92,10 +95,21 @@ def load_whisper_model():
     Returns:
         whisper model instance or None if loading fails.
     """
+    global _whisper_model
+    
+    if _whisper_model is not None:
+        return _whisper_model
+        
     try:
-        model = whisper.load_model(OPENAI_MODELS['whisper'])
-        print(f"Whisper model '{OPENAI_MODELS['whisper']}' loaded successfully")
-        return model
+        start_time = time.time()
+        print(f"Loading Whisper model '{OPENAI_MODELS['whisper']}'...")
+        
+        _whisper_model = whisper.load_model(OPENAI_MODELS['whisper'])
+        
+        elapsed = time.time() - start_time
+        print(f"Whisper model '{OPENAI_MODELS['whisper']}' loaded successfully in {elapsed:.2f} seconds")
+        
+        return _whisper_model
     except Exception as e:
         print(f"Error loading Whisper model: {e}")
         return None
