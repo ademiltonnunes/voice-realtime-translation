@@ -104,12 +104,12 @@ Before you begin, ensure you have the following installed:
 
 1. Create a `src/config.js` file with your function URLs:
    ```javascript
-   const isDevelopment = process.env.NODE_ENV === 'development';
+   const isLocal = false;
 
    const config = {
-     functionUrl: isDevelopment 
-       ? 'http://localhost:5001/your-project-id/us-central1/translateHttp'
-       : 'https://us-central1-your-project-id.cloudfunctions.net/translateHttp'
+     functionUrl: isLocal
+       ? 'http://localhost:5001/your-project-id/us-central1/translationService'
+       : 'https://us-central1-your-project-id.cloudfunctions.net/translationService'
    };
 
    export default config;

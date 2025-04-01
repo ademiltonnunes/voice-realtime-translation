@@ -8,11 +8,10 @@ import os
 
 # Import utility modules
 from utilsfunctions import validate_request, get_cors_headers
-from ai_services import translate_text
-# transcribe_audio, 
+from ai_services import translate_text, transcribe_audio
 
 @https_fn.on_request()
-def translateHttp(request):
+def translationService(request):
     """Process translation requests with actual audio data"""
 
     # Handle preflight OPTIONS request
@@ -55,16 +54,16 @@ def translateHttp(request):
                         temp_audio_path = temp_audio.name
                     
                     try:
-                        # # Transcribe the audio
-                        # success, transcription = transcribe_audio(temp_audio_path, source_language)
-                        # if not success:
-                        #     return jsonify({'error': f"Transcription error: {transcription}"}), 500, headers
-                        transcription = "What is your name?"
+                        # Transcribe the audio
+                        success, transcription = transcribe_audio(temp_audio_path, source_language)
+                        if not success:
+                            return jsonify({'error': f"Transcription error: {transcription}"}), 500, headers
 
                         # Translate the transcription
                         success, translated_text = translate_text(transcription, source_language, target_language)
                         if not success:
                             return jsonify({'error': f"Translation error: {translated_text}"}), 500, headers
+                        
                         
                         # Return successful response
                         return jsonify({

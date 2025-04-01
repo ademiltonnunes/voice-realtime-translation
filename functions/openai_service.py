@@ -1,4 +1,4 @@
-# import whisper
+import whisper
 from openai import OpenAI
 from dotenv import load_dotenv
 import traceback
@@ -8,9 +8,8 @@ import httpx
 # OpenAI model configuration
 OPENAI_MODELS = {
     'chat': 'gpt-3.5-turbo',
-    'whisper': 'medium', # Whisper model size: "base", "small", "medium", or "large"
+    'whisper': 'base', # Whisper model size: "base", "small", "medium", or "large"
 }
-
 
 def get_openai_api_key():
     """Retrieve OpenAI API key from Firebase config or environment variables."""
@@ -86,13 +85,47 @@ def generate_completion(system_prompt, user_prompts):
         
         return False, f"Error occurred: {str(e)[:100]}"
 
-# def load_whisper_model():
-#     """Load the Whisper model for transcription and translation"""
-#     return 'loaded'
-#     # try:
-#     #     model = whisper.load_model(OPENAI_MODELS['whisper'])
-#     #     print(f"Whisper model '{OPENAI_MODELS['whisper']}' loaded successfully")
-#     #     return model
-#     # except Exception as e:
-#     #     print(f"Error loading Whisper model: {e}")
-#     #     return None
+def load_whisper_model():
+    """
+    Load the Whisper model for transcription.
+    
+    Returns:
+        whisper model instance or None if loading fails.
+    """
+    try:
+        model = whisper.load_model(OPENAI_MODELS['whisper'])
+        print(f"Whisper model '{OPENAI_MODELS['whisper']}' loaded successfully")
+        return model
+    except Exception as e:
+        print(f"Error loading Whisper model: {e}")
+        return None
+
+def transcribe(audio_file_path, language):
+    """
+    Transcribe audio using a given Whisper model.
+    
+    Args:
+        model: Loaded Whisper model instance.
+        audio_file_path: Path to the audio file.
+        language: Language code (e.g., 'en', 'es').
+        
+    Returns:
+        tuple: (success, transcription or error message).
+    """
+    try:
+        model = load_whisper_model()
+        if model is None:
+            return False, "Whisper model is not loaded."
+
+        result = model.transcribe(audio_file_path, language=language)
+        transcript = result["text"]
+        
+        print(f"Transcription successful: {transcript[:50]}...")
+        return True, transcript
+    except Exception as e:
+        error_message = str(e)
+        stack_trace = traceback.format_exc()
+        print(f"Whisper transcription error: {error_message}")
+        print(stack_trace)
+        
+        return False, f"Error occurred: {str(e)[:100]}"
