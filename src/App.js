@@ -7,13 +7,15 @@ import config from './config';
 
 function App() {
   // Language selection state
-  const [sourceLanguage, setSourceLanguage] = useState('');
+  const [sourceLanguage, setSourceLanguage] = useState('en');
   const [targetLanguage, setTargetLanguage] = useState('');
   const [languagesSelected, setLanguagesSelected] = useState(false);
   
-  // Recording state
-  const [activeRecorder, setActiveRecorder] = useState(null); // 'source' or 'target'
+  // Recording variables
+  const [activeRecorder, setActiveRecorder] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
   
   // Conversation history
   const [sourceMessages, setSourceMessages] = useState([]);
@@ -32,45 +34,77 @@ function App() {
   const startRecording = (side) => {
     if (isProcessing) return;
     
-    setActiveRecorder(side);
-    // Simulate recording for 1 second then auto-stop
-    setTimeout(() => {
-      stopRecording();
-    }, 1000);
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        audioChunksRef.current = [];
+        
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+          }
+        };
+        
+        mediaRecorder.onstop = () => handleAudioData(side);
+        
+        mediaRecorder.start();
+        setActiveRecorder(side);
+      })
+      .catch(error => {
+        console.error('Error accessing microphone:', error);
+        alert('Could not access microphone. Please check permissions.');
+      });
   };
   
   // Stop recording
   const stopRecording = () => {
-    if (activeRecorder) {
-      handleAudioData(activeRecorder);
+    if (mediaRecorderRef.current && activeRecorder) {
+      mediaRecorderRef.current.stop();
+      // The onStop event handler will call handleAudioData
     }
   };
   
   // Process audio data using HTTP function
   const handleAudioData = async (side) => {
-    // Set a pending message for UI feedback
+    const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+    const audioUrl = URL.createObjectURL(audioBlob);
+    
+    // Set a pending message for UI feedback with audio URL
     if (side === 'source') {
       setSourceMessages(prev => [...prev, { 
         type: 'text', 
-        content: 'Recording received, sending to server...',
-        pending: true
+        content: 'Recording received, processing...',
+        pending: true,
+        audioUrl: audioUrl
       }]);
     } else {
       setTargetMessages(prev => [...prev, { 
         type: 'text', 
-        content: 'Recording received, sending to server...',
-        pending: true
+        content: 'Recording received, processing...',
+        pending: true,
+        audioUrl: audioUrl
       }]);
     }
     
     try {
+      // Convert the audio blob to base64
+      const base64Audio = await blobToBase64(audioBlob);
+      console.log(`Audio data size: ${base64Audio.length} bytes`);
+      // If it's very large (over a few MB), we might need to chunk it
+      if (base64Audio.length > 5000000) {  // 5MB threshold
+        console.warn("Audio data is very large and might exceed request limits");
+      }
+      
+      // Send the actual audio data to the function
       const response = await fetch(config.functionUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
-          testMessage: "This is a test message",
+          audio: base64Audio,
           sourceLanguage: side === 'source' ? sourceLanguage : targetLanguage,
           targetLanguage: side === 'source' ? targetLanguage : sourceLanguage
         }),
@@ -85,19 +119,20 @@ function App() {
       
       // Update UI with response
       if (data.originalText && data.translatedText) {
-        // Update the source side with test text
+        // Update the original side with transcription
         if (side === 'source') {
           setSourceMessages(prev => 
             prev.map((msg, i) => 
               i === prev.length - 1 ? { 
                 type: 'text', 
                 content: data.originalText, 
-                pending: false 
+                pending: false, 
+                audioUrl: msg.audioUrl // Preserve the audio URL
               } : msg
             )
           );
           
-          // Add the translated test text to target side
+          // Add the translated text to target side
           setTargetMessages(prev => [...prev, { 
             type: 'text', 
             content: data.translatedText,
@@ -110,7 +145,8 @@ function App() {
               i === prev.length - 1 ? { 
                 type: 'text', 
                 content: data.originalText, 
-                pending: false 
+                pending: false,
+                audioUrl: msg.audioUrl // Preserve the audio URL
               } : msg
             )
           );
@@ -136,6 +172,16 @@ function App() {
       setIsProcessing(false);
       setActiveRecorder(null);
     }
+  };
+
+  // Helper function to convert Blob to Base64
+  const blobToBase64 = (blob) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   };
   
   // Play translated text as speech
@@ -182,9 +228,12 @@ function App() {
         Healthcare Translator
       </Typography>
       
-      <Grid container spacing={2}>
+      <Grid container spacing={2} sx={{ 
+        flexDirection: { xs: 'column', md: 'row' },
+        alignItems: 'stretch'
+      }}>
         {/* Source language side */}
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={6} sx={{ display: 'flex' }}>
           <ConversationSpace 
             languageCode={sourceLanguage}
             messages={sourceMessages}
@@ -197,7 +246,7 @@ function App() {
         </Grid>
         
         {/* Target language side */}
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={6} sx={{ display: 'flex' }}>
           <ConversationSpace 
             languageCode={targetLanguage}
             messages={targetMessages}

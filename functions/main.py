@@ -1,63 +1,94 @@
 from firebase_functions import https_fn
-from flask import jsonify
+from flask import jsonify, request
+import traceback
+import base64
+import tempfile
+import json
+import os
 
-# This function can be called directly with HTTP requests
+# Import utility modules
+from utilsfunctions import validate_request, get_cors_headers
+from ai_services import translate_text
+# transcribe_audio, 
+
 @https_fn.on_request()
-def testAndTranslate(request):
-    """Simple test function that returns fixed text"""
-    # Set CORS headers for the preflight request
-    if request.method == 'OPTIONS':
-        # Allows GET requests from any origin with the Content-Type
-        headers = {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST',
-            'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Max-Age': '3600'
-        }
-        return ('', 204, headers)
+def translateHttp(request):
+    """Process translation requests with actual audio data"""
 
-    # Set CORS headers for the main request
-    headers = {
-        'Access-Control-Allow-Origin': '*'
-    }
+    # Handle preflight OPTIONS request
+    if request.method == 'OPTIONS':
+        headers = get_cors_headers(request)
+        return ('', 204, headers)
+    
+    # Get appropriate CORS headers
+    headers = get_cors_headers(request)
     
     try:
-        # Check if this is a POST request with JSON data
-        if request.method == 'POST' and request.is_json:
-            data = request.get_json()
-            source_language = data.get('sourceLanguage', 'en')
-            target_language = data.get('targetLanguage', 'es')
-            test_message = data.get('testMessage', 'Default test message')
-        else:
-            # For GET requests or non-JSON POST, use default values
-            source_language = request.args.get('sourceLanguage', 'en')
-            target_language = request.args.get('targetLanguage', 'es')
-            test_message = request.args.get('testMessage', 'Default test message')
+        # Validate request
+        is_valid, error_message = validate_request(request)
+        if not is_valid:
+            return jsonify({'error': error_message}), 400, headers
         
-        # Create fake response
-        original_text = f"Original test in {source_language}: {test_message}"
-        
-        # Create fake translation based on target language
-        if target_language == 'es':
-            translated_text = f"Prueba traducida en español: {test_message}"
-        elif target_language == 'fr':
-            translated_text = f"Test traduit en français: {test_message}"
-        elif target_language == 'pt':
-            translated_text = f"Teste traduzido em português: {test_message}"
-        elif target_language == 'de':
-            translated_text = f"Übersetzter Test auf Deutsch: {test_message}"
-        else:
-            translated_text = f"Translated test in {target_language}: {test_message}"
-        
-        # Return the test response
-        return jsonify({
-            'originalText': original_text,
-            'translatedText': translated_text,
-            'status': 'Test successful!'
-        }), 200, headers
+        raw_data = request.get_data()
+
+        try:
+            # Parse JSON
+            if raw_data:
+                data = json.loads(raw_data)
+                
+                # Extract the required fields
+                source_language = data.get('sourceLanguage', 'en')
+                target_language = data.get('targetLanguage', 'es')
+                audio_base64 = data.get('audio', None)
+                
+                if not audio_base64:
+                    return jsonify({'error': 'No audio data provided'}), 400, headers
+                
+                # Process the audio data
+                try:
+                    # Decode base64 to binary
+                    audio_data = base64.b64decode(audio_base64.split(',')[1] if ',' in audio_base64 else audio_base64)
+                    
+                    # Create a temporary file
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.webm') as temp_audio:
+                        temp_audio.write(audio_data)
+                        temp_audio_path = temp_audio.name
+                    
+                    try:
+                        # # Transcribe the audio
+                        # success, transcription = transcribe_audio(temp_audio_path, source_language)
+                        # if not success:
+                        #     return jsonify({'error': f"Transcription error: {transcription}"}), 500, headers
+                        transcription = "What is your name?"
+
+                        # Translate the transcription
+                        success, translated_text = translate_text(transcription, source_language, target_language)
+                        if not success:
+                            return jsonify({'error': f"Translation error: {translated_text}"}), 500, headers
+                        
+                        # Return successful response
+                        return jsonify({
+                            'originalText': transcription,
+                            'translatedText': translated_text,
+                            'status': 'Translation successful!'
+                        }), 200, headers
+                        
+                    finally:
+                        # Clean up the temporary file
+                        if os.path.exists(temp_audio_path):
+                            os.remove(temp_audio_path)
+                            
+                except Exception as e:
+                    print(f"Audio processing error: {str(e)}")
+                    return jsonify({'error': f"Audio processing error: {str(e)}"}), 500, headers
+            else:
+                return jsonify({'error': 'Empty request body'}), 400, headers
+                
+        except json.JSONDecodeError as e:
+            print(f"JSON parsing error: {str(e)}")
+            return jsonify({'error': f"Invalid JSON format: {str(e)}"}), 400, headers
             
     except Exception as e:
-        import traceback
         error_message = str(e)
         stack_trace = traceback.format_exc()
         print(f"Error: {error_message}")

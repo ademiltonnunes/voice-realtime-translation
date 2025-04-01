@@ -1,4 +1,3 @@
-// src/components/RecordButton/RecordButton.jsx
 import React from 'react';
 import { Button } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';

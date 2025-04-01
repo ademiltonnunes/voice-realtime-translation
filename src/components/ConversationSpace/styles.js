@@ -1,9 +1,11 @@
 const styles = {
     conversationSpace: {
         padding: '16px',
-        height: '70vh',
+        height: '70vh', 
+        minHeight: '400px',
         display: 'flex',
         flexDirection: 'column',
+        width: '100%',
     },
     languageHeader: {
         marginBottom: '16px',

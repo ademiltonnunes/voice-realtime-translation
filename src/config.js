@@ -1,9 +1,8 @@
-// src/config.js
-const isLocal = false; // Set to true for local development
+const isLocal = true;
 
 const config = {
   functionUrl: isLocal
-    ? 'http://localhost:5001/voice-realtime-translation/us-central1/testAndTranslate'
+    ? 'http://127.0.0.1:5001/voice-realtime-translation/us-central1/translateHttp'
     : 'https://us-central1-voice-realtime-translation.cloudfunctions.net/testAndTranslate'
 };
 
