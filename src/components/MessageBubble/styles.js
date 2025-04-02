@@ -4,6 +4,7 @@ const styles = {
         marginBottom: '8px',
         borderRadius: '8px',
         maxWidth: '90%',
+        overflowWrap: 'break-word',
     },
     originalBubble: {
         backgroundColor: '#f5f5f5',
@@ -15,16 +16,20 @@ const styles = {
     },
     audioContainer: {
         display: 'flex',
-        alignItems: 'center',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        marginTop: '6px',
     },
     audioPlayer: {
         height: '40px',
+        maxWidth: '100%',
     },
     loadingIndicator: {
         marginLeft: '8px',
     },
     textContainer: {
         wordBreak: 'break-word',
+        width: '100%',
     },
     speakButton: {
         marginTop: '4px',

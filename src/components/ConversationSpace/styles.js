@@ -6,6 +6,7 @@ const styles = {
         display: 'flex',
         flexDirection: 'column',
         width: '100%',
+        flex: '1 0 0%',
     },
     languageHeader: {
         marginBottom: '16px',
@@ -18,6 +19,8 @@ const styles = {
         display: 'flex',
         flexDirection: 'column',
         paddingRight: '8px',
+        minHeight: '250px',
+        width: '100%',
         '&::-webkit-scrollbar': {
         width: '8px',
         },

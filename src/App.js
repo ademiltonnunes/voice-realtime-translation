@@ -228,12 +228,24 @@ function App() {
         Healthcare Translator
       </Typography>
       
-      <Grid container spacing={2} sx={{ 
-        flexDirection: { xs: 'column', md: 'row' },
-        alignItems: 'stretch'
+      <Grid 
+        container 
+        spacing={2}
+        className="conversation-container"
+        sx={{ 
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          width: '100%',
       }}>
         {/* Source language side */}
-        <Grid item xs={12} md={6} sx={{ display: 'flex' }}>
+        <Grid 
+          item 
+          xs={12} 
+          md={6} 
+          className="conversation-panel"
+          sx={{ 
+            display: 'flex'
+          }}>
           <ConversationSpace 
             languageCode={sourceLanguage}
             messages={sourceMessages}
@@ -246,7 +258,14 @@ function App() {
         </Grid>
         
         {/* Target language side */}
-        <Grid item xs={12} md={6} sx={{ display: 'flex' }}>
+        <Grid 
+          item 
+          xs={12} 
+          md={6} 
+          className="conversation-panel" 
+          sx={{ 
+          display: 'flex'
+          }}>
           <ConversationSpace 
             languageCode={targetLanguage}
             messages={targetMessages}

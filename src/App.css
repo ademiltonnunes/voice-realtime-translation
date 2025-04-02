@@ -21,3 +21,28 @@ body {
     padding-bottom: 1rem;
   }
 }
+
+.conversation-container {
+  display: flex;
+  width: 100%;
+}
+
+@media (min-width: 900px) {
+  .conversation-panel {
+    flex: 1;
+    width: 50%;
+  }
+
+  .conversation-panel > div {
+    width: 100%;
+  }
+}
+
+.MuiPaper-root {
+  overflow: hidden;
+}
+
+.messagesContainer {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
