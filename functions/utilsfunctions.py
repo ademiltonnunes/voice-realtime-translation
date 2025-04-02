@@ -20,16 +20,24 @@ def validate_request(request):
     return True, ""
 
 def get_cors_headers(request):
-    """Get appropriate CORS headers based on request origin"""
-    origin = request.headers.get('Origin', '')
-    if origin in ALLOWED_ORIGINS:
-        headers = {
-            'Access-Control-Allow-Origin': origin,
-            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Max-Age': '3600'
-        }
-    else:
-        # Default to no CORS if origin not allowed
-        headers = {}
-    return headers
+    return {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Max-Age': '3600'
+    }
+
+# def get_cors_headers(request):
+#     """Get appropriate CORS headers based on request origin"""
+#     origin = request.headers.get('Origin', '')
+#     if origin in ALLOWED_ORIGINS:
+#         headers = {
+#             'Access-Control-Allow-Origin': origin,
+#             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+#             'Access-Control-Allow-Headers': 'Content-Type',
+#             'Access-Control-Max-Age': '3600'
+#         }
+#     else:
+#         # Default to no CORS if origin not allowed
+#         headers = {}
+#     return headers
