@@ -169,7 +169,8 @@ Before you begin, ensure you have the following installed:
 
 ### Common Issues
 
-1. **CORS errors**: Ensure your function has proper CORS headers in the backend code.
+1. **CORS errors**: Ensure your function has proper CORS headers in the backend code. CORS implementation has been started in the utils.py file.
+
 
 2. **Function URL mismatch**: Verify that the URL in your `config.js` matches the actual deployed function URL.
 
@@ -181,6 +182,17 @@ Before you begin, ensure you have the following installed:
 4. **Microphone access denied**: Users must grant permission to access their microphone.
 
 5. **OpenAI API errors**: Verify your API key is correctly set in both your local environment and Firebase config.
+
+6. **Firebase Authentication Configuration**: By default, Firebase Cloud Functions require authentication. For this application to work properly, you need to disable the authentication requirement:
+
+   1. Navigate to the Google Cloud Console for your Firebase project
+   2. Go to Cloud Run > Services
+   3. Select your function service
+   4. Click on Permission
+   5. Add on "Add Principal" button
+   6. On "New Principal" add 'allUsers' and "Select Role" add 'Cloud Run Invoker'
+   7. Click on "Save"
+
 
 ## Future Enhancements
 
