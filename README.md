@@ -1,4 +1,4 @@
-# Healthcare Translation Web App
+# Healthcare Voice Translation App
 
 ## Project Overview
 
