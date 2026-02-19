@@ -11,7 +11,6 @@ Key features:
 - Mobile-responsive interface with dual conversation displays
 - Simple language selection interface
 
-## Live Link: https://voice-realtime-translation.web.app/
 
 ## Technology Stack
 
